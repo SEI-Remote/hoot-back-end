@@ -30,7 +30,67 @@ async function index(req, res) {
   }
 }
 
+async function show(req, res) {
+  try {
+    const blog = await Blog.findById(req.params.blogId)
+      .populate(['author', 'comments.author'])
+    res.status(200).json(blog)
+  } catch (error) {
+    console.log(error)
+    res.status(500).json(error)
+  }
+}
+
+async function update(req, res) {
+  try {
+    const blog = await Blog.findByIdAndUpdate(
+      req.params.blogId,
+      req.body,
+      { new: true }
+    ).populate('author')
+    res.status(200).json(blog)
+  } catch (error) {
+    console.log(error)
+    res.status(500).json(error)
+  }
+}
+
+async function deleteBlog(req, res) {
+  try {
+    const blog = await Blog.findByIdAndDelete(req.params.blogId)
+    const profile = await Profile.findById(req.user.profile)
+    profile.blogs.remove({ _id: req.params.blogId })
+    await profile.save()
+    res.status(200).json(blog)
+  } catch (error) {
+    console.log(error)
+    res.status(500).json(error)
+  }
+}
+
+async function createComment(req, res) {
+  try {
+    req.body.author = req.user.profile 
+    const blog = await Blog.findById(req.params.blogId)
+    blog.comments.push(req.body)
+    await blog.save()
+
+    const newComment = blog.comments.at(-1)
+
+    const profile = await Profile.findById(req.user.profile)
+    newComment.author = profile
+
+    res.status(201).json(newComment)
+  } catch (error) {
+    res.status(500).json(error)
+  }
+}
+
 export { 
   create, 
-  index 
+  index,
+  show,
+  update,
+  deleteBlog as delete,
+  createComment
 }
