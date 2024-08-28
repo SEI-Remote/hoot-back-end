@@ -19,7 +19,15 @@ async function create(req, res) {
 }
 
 async function index(req, res) {
-
+  try {
+    const blogs = await Blog.find({})
+      .populate('author')
+      .sort({ createdAt: 'desc' })
+    res.status(200).json(blogs)
+  } catch (error) {
+    console.log(error)
+    res.status(500).json(error)
+  }
 }
 
 export { 
